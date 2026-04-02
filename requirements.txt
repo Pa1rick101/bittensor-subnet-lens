@@ -1,4 +1,5 @@
 bittensor==9.12.2
+urllib3<2
 bittensor-drand==1.3.0
 bittensor-wallet==4.0.1
 pandas==2.3.3
