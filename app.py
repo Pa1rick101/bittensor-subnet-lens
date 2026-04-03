@@ -17,6 +17,15 @@ st.caption("Bittensor subnet health & analytics dashboard")
 netuid = st.sidebar.number_input("Subnet (netuid)", min_value=1, max_value=100, value=1)
 st.sidebar.info("Start with netuid=1 (SN1 — text prompting)")
 
+def gini(values):
+    arr = sorted(values)
+    n = len(arr)
+    cumsum = 0
+    for i, v in enumerate(arr):
+        cumsum += (2 * (i + 1) - n - 1) * v
+    return cumsum / (n * sum(arr)) if sum(arr) > 0 else 0
+
+
 # --- Load data ---
 @st.cache_resource(ttl=60)
 def load_metagraph(netuid: int):
@@ -38,6 +47,23 @@ df = pd.DataFrame({
     "emission": meta.emission.tolist(),
     "incentive": meta.I.tolist(),
 })
+
+# --- Gini Health Score ---
+gini_score = gini(df["emission"].tolist())
+
+st.subheader("Subnet Health Score")
+col1, col2, col3 = st.columns(3)
+
+col1.metric("Gini Coefficient", f"{gini_score:.3f}")
+col2.metric("Miners", len(df))
+col3.metric("Total Emission", f"{df['emission'].sum():.4f}")
+
+if gini_score < 0.4:
+    st.success("✅ Healthy — emissions are well distributed")
+elif gini_score < 0.7:
+    st.warning("⚠️ Moderate — some concentration detected")
+else:
+    st.error("🚨 Unhealthy — emissions are highly concentrated")
 
 # --- Panel 1: Emission distribution ---
 st.subheader("Emission Distribution")
